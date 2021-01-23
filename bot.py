@@ -16,7 +16,7 @@ def getDB(file):
 	return content
 
 def addCountToUser(file, username):
-	print("Username:" + username)
+	#print("Username:" + username)
 	dbfile = open(file, "r")
 	content = ""
 	found = False
@@ -31,7 +31,7 @@ def addCountToUser(file, username):
 	if (found == False):
 		content += username + "|" + str(1)
 
-	print(content)
+	#print(content)
 	dbfile.close()
 
 	dbfile = open(file, "w")
@@ -55,9 +55,27 @@ async def on_message(message):
 	if message.author == bot.user:
 		return
 
+	messageParts = message.content.split(" ")
+	command = messageParts[0]
+	args = messageParts[1:]
+	response = ""
+	
+	if(command == "!stats"):
+		if(len(args) == 0):
+			author = str(message.author).split("#")[0]
+			messageAmount = searchForUser("db.txt", author)
+			response = "User "+ author+ " has sent "+ str(messageAmount) + " messages so far."
+		elif(len(args) == 1):
+			messageAmount = searchForUser("db.txt", str(args[0]))
+			response = "User "+ args[0]+ " has sent "+ str(messageAmount) + " messages so far."
+		else:
+			response = "Too many arguments given, use !stats for own stats or !stats <username> for another users stats"
+		await message.channel.send(response)
+		return
+
 	addCountToUser("db.txt", str(message.author))
 
-	#await message.channel.send(message.content)
+	
 
 load_dotenv()
 token = os.getenv("TOKEN")
