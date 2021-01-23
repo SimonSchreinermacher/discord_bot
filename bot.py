@@ -1,4 +1,5 @@
 import discord
+from discord.utils import get
 import fileinput
 from dotenv import load_dotenv
 import os
@@ -37,6 +38,17 @@ def addCountToUser(file, username):
 	dbfile.write(content)
 	dbfile.close()
 
+def searchForUser(file, user):
+	user = user.split("#")[0] #in case someone uses full name (USERNAME#ID)
+	dbfile = open(file, "r")
+	for line in dbfile:
+		(name, amount) = line.split("|")
+		name = name.split("#")[0]
+		if(name == user):
+			return amount
+	return 0
+
+
 
 @bot.event
 async def on_message(message):
@@ -44,11 +56,9 @@ async def on_message(message):
 		return
 
 	addCountToUser("db.txt", str(message.author))
-	
+
 	#await message.channel.send(message.content)
 
-
-#TODO: Add .env to gitignore
 load_dotenv()
 token = os.getenv("TOKEN")
 bot.run(token)
