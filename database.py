@@ -26,15 +26,9 @@ def deleteFromUsers(username, tag):
     entry = {"username" : username, "tag" : tag}
     userCollection.delete_one(entry)
 
-#def getMessageCount(username, tag="ignore"):
-    #matches = findByUsername(username, tag)
-    #results = []
-    #for entry in matches:
-    #    results.append([entry["username"], entry["tag"], entry["messagesSent"]])
-    #return results
-
-def mockData():
-    entry1 = {"username" : "DuplicateUser", "tag" : "1000", "messagesSent" : 2}
-    entry2 = {"username" : "DuplicateUser", "tag" : "1001", "messagesSent" : 14}
-    userCollection.insert(entry1)
-    userCollection.insert(entry2)
+def incrementMessageCount(username, tag):
+    result = userCollection.find({"username" : username, "tag" : tag})
+    for entry in result:
+        oldMessageCount = entry["messagesSent"]
+        update = { "$set" : {"messagesSent" : oldMessageCount + 1}}
+        userCollection.update_one(entry, update)

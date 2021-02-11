@@ -7,57 +7,9 @@ import os
 
 bot = discord.Client()
 
-
-def getDB(file):
-	content = {}
-	with open(file) as f:
-		for line in f:
-			(key, val) = line.split("|")
-			content[key] = val
-	return content
-
-def addCountToUser(file, username):
-	#print("Username:" + username)
-	dbfile = open(file, "r")
-	content = ""
-	found = False
-	for line in dbfile:
-		(user, amount) = line.split("|")
-		if(user == username):
-			newamount = int(amount) + 1
-			content += username + "|" + str(newamount)
-			found = True
-		else:
-			content += line
-	if (found == False):
-		content += username + "|" + str(1)
-
-	#print(content)
-	dbfile.close()
-
-	dbfile = open(file, "w")
-	dbfile.write(content)
-	dbfile.close()
-
-def searchForUser(file, user):
-	user = user.split("#")[0] #in case someone uses full name (USERNAME#ID)
-	dbfile = open(file, "r")
-	for line in dbfile:
-		(name, amount) = line.split("|")
-		name = name.split("#")[0]
-		if(name == user):
-			return amount
-	return 0
-
-
-
 @bot.event
 async def on_message(message):
 	
-	results = database.findAllUsers()
-	for user in results:
-		print(user)
-	print("=====")
 	if message.author == bot.user:
 		return
 
@@ -65,12 +17,12 @@ async def on_message(message):
 	command = messageParts[0]
 	args = messageParts[1:]
 	response = ""
+	(author,tag) = str(message.author).split("#")[0:2]
 
 	if(command == "!stats"):
 
 		#Own Stats
 		if(len(args) == 0):
-			(author,tag) = str(message.author).split("#")[0:2]
 			results = database.findByUsername(author, tag)
 			if(len(results) == 0):
 				database.addToUserCollection(author, tag)
@@ -81,7 +33,6 @@ async def on_message(message):
 
 		#Stats of other member
 		elif(len(args) == 1):
-			messageAmount = searchForUser("db.txt", str(args[0]))
 			splitArgument = str(args[0]).split("#")
 			username = splitArgument[0]
 
@@ -90,12 +41,12 @@ async def on_message(message):
 				tag = splitArgument[1]
 				results = database.findByUsername(username, tag)
 				if(len(results) == 0):
-					response = "User " + username + "#" + tag + " has not sent any messages on this server"
+					response = "No users in database matching full username " + username + "#" + tag
 				else:
 					playerData = results[0]
 					response = "User "+ username+ "#" + tag +  " has sent "+ str(playerData["messagesSent"]) + " messages so far."
 
-			#If tag is not included in request
+			#If tag is not included in request, all members with matching username will be selected
 			else:
 				results = database.findByUsername(username)
 				if(len(results) == 0):
@@ -107,7 +58,8 @@ async def on_message(message):
 		await message.channel.send(response)
 		return
 
-	addCountToUser("db.txt", str(message.author))
+	#If no commands match user message, increase message count by one (bot commands should not count towards message count)
+	database.incrementMessageCount(author, tag)
 
 load_dotenv()
 token = os.getenv("TOKEN")
