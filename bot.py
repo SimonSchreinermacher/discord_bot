@@ -10,6 +10,7 @@ bot = discord.Client()
 @bot.event
 async def on_message(message):
 	
+	
 	if message.author == bot.user:
 		return
 
@@ -25,7 +26,6 @@ async def on_message(message):
 		if(len(args) == 0):
 			results = database.findByUsername(author, tag)
 			if(len(results) == 0):
-				database.addToUserCollection(author, tag)
 				response = "User" + author + "has not sent any messages on this server"
 			else:
 				playerData = results[0]
@@ -59,6 +59,11 @@ async def on_message(message):
 		return
 
 	#If no commands match user message, increase message count by one (bot commands should not count towards message count)
+	#If user is not in database, add them before incrementing their counter
+	results = database.findByUsername(author, tag)
+	if(len(results) == 0):
+		database.addToUserCollection(author, tag)
+	
 	database.incrementMessageCount(author, tag)
 
 load_dotenv()
