@@ -5,7 +5,16 @@ import fileinput
 from dotenv import load_dotenv
 import os
 
-bot = discord.Client()
+intents = discord.Intents.all()
+bot = discord.Client(intents = intents)
+
+def getServer():
+	server_id = os.getenv("ID")
+	return bot.get_guild(int(server_id))
+
+def getAllUsers():
+	server = getServer()
+	return server.members
 
 @bot.event
 async def on_message(message):
