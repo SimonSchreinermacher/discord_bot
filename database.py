@@ -16,8 +16,8 @@ def findAllUsers():
     results = list(userCollection.find())
     return results
 
-def addToUserCollection(username, tag):
-    entry = {"username" : username, "tag" : tag, "messagesSent" : 0}
+def addToUserCollection(username, tag, joined_at):
+    entry = {"username" : username, "tag" : tag, "Joined at": joined_at, "messagesSent" : 0}
     identicalUsers = findByUsername(username, tag)
     if(len(identicalUsers) == 0):
         userCollection.insert(entry)

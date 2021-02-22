@@ -75,7 +75,7 @@ async def on_message(message):
 	#If user is not in database, add them before incrementing their counter
 	results = database.findByUsername(author, tag)
 	if(len(results) == 0):
-		database.addToUserCollection(author, tag)
+		database.addToUserCollection(author, tag, message.author.joined_at)
 	
 	database.incrementMessageCount(author, tag)
 
