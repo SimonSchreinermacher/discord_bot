@@ -54,12 +54,7 @@ def command_stats(author, tag, args, message):
 		response = "Too many arguments given, use !stats for own stats or !stats <username> for another users stats"
 	return response
 
-
-@bot.event
-async def on_message(message):
-	if message.author == bot.user:
-		return
-
+def handle_commands(message):
 	messageParts = message.content.split(" ")
 	command = messageParts[0]
 	args = messageParts[1:]
@@ -68,11 +63,24 @@ async def on_message(message):
 
 	if(command == "!stats"):
 		response = command_stats(author, tag, args, message)
+		return response
+
+	return "No commands matching " + command
+		
+@bot.event
+async def on_message(message):
+	if message.author == bot.user:
+		return
+
+	#If message is sent to the bot-commands channel, the bot interprets it as a command, else as a normal message
+	if(str(message.channel) == "bot-commands"):
+		response = handle_commands(message)
 		await message.channel.send(response)
 		return
 
-	#If no commands match user message, increase message count by one (bot commands should not count towards message count)
-	#If user is not in database, add them before incrementing their counter
+	(author,tag) = str(message.author).split("#")[0:2]
+	
+	#If the message was sent to a channel that is not responsible for handling commands, increment message count of user
 	results = database.findByUsername(author, tag)
 	if(len(results) == 0):
 		database.addToUserCollection(author, tag, message.author.joined_at)
