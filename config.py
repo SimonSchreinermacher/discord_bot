@@ -47,6 +47,10 @@ def getFromConfig(entry):
 def changeConfigEntry(entry, newvalue):
     data = loadConfigEntries()
     if(data != None):
-        data[entry] = newvalue
-        with open("config.json", "w") as jsonfile:
-            json.dump(data, jsonfile, indent=4)
+        defaultData = defaultConfig()
+        if(entry in defaultData.keys()):
+            data[entry] = newvalue
+            with open("config.json", "w") as jsonfile:
+                json.dump(data, jsonfile, indent=4)
+
+changeConfigEntry("s", "t")
