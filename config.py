@@ -5,9 +5,21 @@ import json
 def defaultConfig():
     #DO NOT EDIT THIS DICTIONARY WHILE IN PRODUCTION
     data = {
-        
+
     }
     return data
+
+def isInitialized():
+    try:
+        with open("config.json", "r") as jsonfile:
+            data = json.load(jsonfile)
+            defaultdata = defaultConfig()
+            for key in defaultdata.keys():
+                if key not in data.keys():
+                    return False
+            return True
+    except:
+        return False
 
 def initConfig():
     data = defaultConfig()
@@ -52,5 +64,3 @@ def changeConfigEntry(entry, newvalue):
             data[entry] = newvalue
             with open("config.json", "w") as jsonfile:
                 json.dump(data, jsonfile, indent=4)
-
-changeConfigEntry("s", "t")
