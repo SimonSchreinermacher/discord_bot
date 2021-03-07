@@ -70,6 +70,23 @@ def command_init():
 		response = "Created config file with default configuration settings"
 	return response
 
+def command_restoredefault(args):
+	if(len(args) == 1):
+		defaultData = config.defaultConfig()
+		try:
+			configEntry = args[0]
+			defaultValue = defaultData[configEntry]
+			config.changeConfigEntry(configEntry, defaultValue)
+			response = "Config entry " + configEntry + " changed to its default value " + defaultValue
+			return response
+		except:
+			response = configEntry + " is not a valid valid config entry!"
+			return response
+	else:
+		response = "Usage: !restoredefault <ConfigEntry>"
+		return response
+		 
+
 def handle_commands(message):
 	messageParts = message.content.split(" ")
 	command = messageParts[0]
@@ -79,6 +96,10 @@ def handle_commands(message):
 
 	if(command == "!init"):
 		response = command_init()
+		return response
+
+	if(command == "!restoredefault"):
+		response = command_restoredefault(args)
 		return response
 
 	if(command == "!stats"):
