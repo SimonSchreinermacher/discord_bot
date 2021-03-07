@@ -57,8 +57,14 @@ def command_stats(author, tag, args, message):
 
 def command_init():
 	response = ""
-	if(config.isInitialized()):
+	configStatus = config.isValidConfig()
+	if(configStatus[0] == 1):
 		response = "This bot is already initialized and ready to use"
+	elif(configStatus[0] == 0):
+		response = "This bot is already initialized, but there values missing for the following entries:\n"
+		for key in configStatus[1]:
+			response = response + key + "\n"
+		response = response + "It is strongly recommended to use !restoredefault for all missing entries to make sure, the bot works as intended"
 	else:
 		config.initConfig()
 		response = "Created config file with default configuration settings"

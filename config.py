@@ -9,17 +9,21 @@ def defaultConfig():
     }
     return data
 
-def isInitialized():
+#Returns 1, if config file exists and all entries are set, 0 if file exists, but keys are missing, -1 if file doesnt exist
+def isValidConfig():
+    defaultdata = defaultConfig()
     try:
         with open("config.json", "r") as jsonfile:
             data = json.load(jsonfile)
-            defaultdata = defaultConfig()
+            missingKeys = []
+            returnValue = 1
             for key in defaultdata.keys():
                 if key not in data.keys():
-                    return False
-            return True
+                    missingKeys.append(key)
+                    returnValue = 0
+            return (returnValue, missingKeys)
     except:
-        return False
+        return (-1, list(defaultdata.keys()))
 
 def initConfig():
     data = defaultConfig()
