@@ -1,5 +1,6 @@
 import discord
 import database
+import config
 from discord.utils import get
 import fileinput
 from dotenv import load_dotenv
@@ -54,12 +55,25 @@ def command_stats(author, tag, args, message):
 		response = "Too many arguments given, use !stats for own stats or !stats <username> for another users stats"
 	return response
 
+def command_init():
+	response = ""
+	if(config.isInitialized()):
+		response = "This bot is already initialized and ready to use"
+	else:
+		config.initConfig()
+		response = "Created config file with default configuration settings"
+	return response
+
 def handle_commands(message):
 	messageParts = message.content.split(" ")
 	command = messageParts[0]
 	args = messageParts[1:]
 	response = ""
 	(author,tag) = str(message.author).split("#")[0:2]
+
+	if(command == "!init"):
+		response = command_init()
+		return response
 
 	if(command == "!stats"):
 		response = command_stats(author, tag, args, message)
