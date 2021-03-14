@@ -1,1 +1,4 @@
-{}
+{
+    "bot_channel": "bot-commands",
+    "enable_command_stats": true
+}

@@ -20,39 +20,42 @@ def getAllUsers():
 def command_stats(author, tag, args, message):
 	response = ""
 
-	#Own Stats
-	if(len(args) == 0):
-		results = database.findByUsername(author, tag)
-		if(len(results) == 0):
-			response = "User" + author + "has not sent any messages on this server"
-		else:
-			playerData = results[0]
-			response = "User "+ author+ " has sent "+ str(playerData["messagesSent"]) + " messages so far."
-
-	#Stats of other member
-	elif(len(args) == 1):
-		splitArgument = str(args[0]).split("#")
-		username = splitArgument[0]
-
-		#If tag is included in request
-		if(len(splitArgument) == 2):
-			tag = splitArgument[1]
-			results = database.findByUsername(username, tag)
+	if(config.getFromConfig("enable_command_stats") == True):
+		#Own Stats
+		if(len(args) == 0):
+			results = database.findByUsername(author, tag)
 			if(len(results) == 0):
-				response = "No users in database matching full username " + username + "#" + tag
+				response = "User" + author + "has not sent any messages on this server"
 			else:
 				playerData = results[0]
-				response = "User "+ username+ "#" + tag +  " has sent "+ str(playerData["messagesSent"]) + " messages so far."
+				response = "User "+ author+ " has sent "+ str(playerData["messagesSent"]) + " messages so far."
 
-		#If tag is not included in request, all members with matching username will be selected
+		#Stats of other member
+		elif(len(args) == 1):
+			splitArgument = str(args[0]).split("#")
+			username = splitArgument[0]
+
+			#If tag is included in request
+			if(len(splitArgument) == 2):
+				tag = splitArgument[1]
+				results = database.findByUsername(username, tag)
+				if(len(results) == 0):
+					response = "No users in database matching full username " + username + "#" + tag
+				else:
+					playerData = results[0]
+					response = "User "+ username+ "#" + tag +  " has sent "+ str(playerData["messagesSent"]) + " messages so far."
+
+			#If tag is not included in request, all members with matching username will be selected
+			else:
+				results = database.findByUsername(username)
+				if(len(results) == 0):
+					response = "No users in database matching username " + username
+				for result in results:
+					response = response + "User " + username + "#" + result["tag"] + " has sent " + str(result["messagesSent"]) + " messages so far\n"
 		else:
-			results = database.findByUsername(username)
-			if(len(results) == 0):
-				response = "No users in database matching username " + username
-			for result in results:
-				response = response + "User " + username + "#" + result["tag"] + " has sent " + str(result["messagesSent"]) + " messages so far\n"
+			response = "Too many arguments given, use !stats for own stats or !stats <username> for another users stats"
 	else:
-		response = "Too many arguments given, use !stats for own stats or !stats <username> for another users stats"
+		response = "This command is disabled by configuration!"
 	return response
 
 def command_init():
@@ -77,10 +80,10 @@ def command_restoredefault(args):
 			configEntry = args[0]
 			defaultValue = defaultData[configEntry]
 			config.changeConfigEntry(configEntry, defaultValue)
-			response = "Config entry " + configEntry + " changed to its default value " + defaultValue
+			response = "Config entry " + configEntry + " changed to its default value " + str(defaultValue)
 			return response
 		except:
-			response = configEntry + " is not a valid valid config entry!"
+			response = configEntry + " is not a valid config entry!"
 			return response
 	else:
 		response = "Usage: !restoredefault <ConfigEntry>"
@@ -112,9 +115,8 @@ def handle_commands(message):
 async def on_message(message):
 	if message.author == bot.user:
 		return
-
 	#If message is sent to the bot-commands channel, the bot interprets it as a command, else as a normal message
-	if(str(message.channel) == "bot-commands"):
+	if(str(message.channel) == config.getFromConfig("bot_channel") or message.content.split(" ")[0] == "!init"):
 		response = handle_commands(message)
 		await message.channel.send(response)
 		return

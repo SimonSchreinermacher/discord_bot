@@ -5,7 +5,8 @@ import json
 def defaultConfig():
     #DO NOT EDIT THIS DICTIONARY WHILE IN PRODUCTION
     data = {
-
+        "bot_channel" : "bot-commands",
+        "enable_command_stats" : True
     }
     return data
 
