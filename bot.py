@@ -93,27 +93,31 @@ def command_listusers(args):
 	users = getAllUsers()
 	response = ""
 
-	#Get all users
-	if(len(args) == 0):
-		response = "All users on this server:\n"
-		for user in users:
-			user_roles = ""
-			for role in user.roles:
-				if str(role) != "@everyone":
-					user_roles = user_roles + str(role)
-			response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
-	
-	elif(len(args) == 1):
-		#Get all users that are currently online
-		if(str(args[0]) == "online"):
-			response = "All users currently online:\n"
+	if(config.getFromConfig("enable_command_listusers") == True):
+
+		#Get all users
+		if(len(args) == 0):
+			response = "All users on this server:\n"
 			for user in users:
-				if(str(user.status) == "online"):
-					user_roles = ""
-					for role in user.roles:
-						if str(role) != "@everyone":
-							user_roles = user_roles + str(role)
-					response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
+				user_roles = ""
+				for role in user.roles:
+					if str(role) != "@everyone":
+						user_roles = user_roles + str(role)
+				response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
+		
+		elif(len(args) == 1):
+			#Get all users that are currently online
+			if(str(args[0]) == "online"):
+				response = "All users currently online:\n"
+				for user in users:
+					if(str(user.status) == "online"):
+						user_roles = ""
+						for role in user.roles:
+							if str(role) != "@everyone":
+								user_roles = user_roles + str(role)
+						response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
+	else:
+		response = "This command is disabled by configuration!"
 	return response
 
 
