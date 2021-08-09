@@ -88,7 +88,34 @@ def command_restoredefault(args):
 	else:
 		response = "Usage: !restoredefault <ConfigEntry>"
 		return response
-		 
+
+def command_listusers(args):
+	users = getAllUsers()
+	response = ""
+
+	#Get all users
+	if(len(args) == 0):
+		response = "All users on this server:\n"
+		for user in users:
+			user_roles = ""
+			for role in user.roles:
+				if str(role) != "@everyone":
+					user_roles = user_roles + str(role)
+			response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
+	
+	elif(len(args) == 1):
+		#Get all users that are currently online
+		if(str(args[0]) == "online"):
+			response = "All users currently online:\n"
+			for user in users:
+				if(str(user.status) == "online"):
+					user_roles = ""
+					for role in user.roles:
+						if str(role) != "@everyone":
+							user_roles = user_roles + str(role)
+					response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
+	return response
+
 
 def handle_commands(message):
 	messageParts = message.content.split(" ")
@@ -107,6 +134,10 @@ def handle_commands(message):
 
 	if(command == "!stats"):
 		response = command_stats(author, tag, args, message)
+		return response
+
+	if(command == "!listusers"):
+		response = command_listusers(args)
 		return response
 
 	return "No commands matching " + command
