@@ -170,21 +170,25 @@ def handle_commands(message):
 async def on_message(message):
 	if message.author == bot.user:
 		return
-	print(database.findAllUsers())
-	#If message is sent to the bot-commands channel, the bot interprets it as a command, else as a normal message
-	if(str(message.channel) == config.getFromConfig("bot_channel") or message.content.split(" ")[0] == "!init"):
-		response = handle_commands(message)
+	if message.content.split(" ")[0] == "!init":
+		response = command_init()
 		await message.channel.send(response)
 		return
+	#If message is sent to the bot-commands channel, the bot interprets it as a command, else as a normal message
+	if(config.isValidConfig()[0] == 1):
+		if(str(message.channel) == config.getFromConfig("bot_channel")):
+			response = handle_commands(message)
+			await message.channel.send(response)
+			return
 
-	(author,tag) = str(message.author).split("#")[0:2]
-	
-	#If the message was sent to a channel that is not responsible for handling commands, increment message count of user
-	results = database.findByUsername(author, tag)
-	if(len(results) == 0):
-		database.addToUserCollection(author, tag, message.author.joined_at)
-	
-	database.incrementMessageCount(author, tag)
+		(author,tag) = str(message.author).split("#")[0:2]
+		
+		#If the message was sent to a channel that is not responsible for handling commands, increment message count of user
+		results = database.findByUsername(author, tag)
+		if(len(results) == 0):
+			database.addToUserCollection(author, tag, message.author.joined_at)
+		
+		database.incrementMessageCount(author, tag)
 
 load_dotenv()
 token = os.getenv("TOKEN")
