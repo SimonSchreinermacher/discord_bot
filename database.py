@@ -32,3 +32,13 @@ def incrementMessageCount(username, tag):
         oldMessageCount = entry["messagesSent"]
         update = { "$set" : {"messagesSent" : oldMessageCount + 1}}
         userCollection.update_one(entry, update)
+
+def allUsersPresent(users):
+    missingUsers = []
+    returnValue = 1
+    for user in users:
+        (username, tag) = str(user).split('#')[0:2]
+        if len(findByUsername(username, tag)) == 0:
+            missingUsers.append(user)
+            returnValue = 0
+    return(returnValue, missingUsers)

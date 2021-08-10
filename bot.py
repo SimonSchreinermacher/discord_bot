@@ -58,24 +58,34 @@ def command_stats(author, tag, args, message):
 		response = "This command is disabled by configuration!"
 	return response
 
-def command_init():
+def command_init(): #intializes config file and database if necessary
 	response = ""
-	configStatus = config.isValidConfig()
+
+	#CONFIG
+	configStatus = config.isValidConfig() 
+	#status = 1 -> Config is properly set up		status = 0 -> Values are missing		status = -1 -> The file itself is missing
 	if(configStatus[0] == 1):
-		response = "This bot is already initialized and ready to use"
+		response += "The config is already initialized and ready to use\n"
 	elif(configStatus[0] == 0):
-		response = "This bot is already initialized, but some entries are missing. These will be automatically created with their default value:\n"
+		response += "The config is already initialized, but some entries are missing. These will be automatically created with their default value:\n"
 		for key in configStatus[1]:
-			response = response + command_restoredefault([key])
+			response = response + command_restoredefault([key]) + "\n"
 		#response = response + "It is strongly recommended to use !restoredefault for all missing entries to make sure, the bot works as intended"
 	else:
 		#Create config.json
 		config.initConfig()
-		response = "Created config file with default configuration settings"
+		response += "Created config file with default configuration settings\n"
 
+	#DATABASE
+	users = getAllUsers()
+	databaseStatus = database.allUsersPresent(users)
+	#status = 1 -> All users on this server are present in the database 	status = 0 -> Some users are not present in the database
+	if(databaseStatus[0] == 1):
+		response += "The database is already complete and ready to use\n"
+	else:
+		response += str(len(databaseStatus[1])) + " entries are missing in the database and are now added\n"
 		#Fill user database with all users currently on this server
-		users = getAllUsers()
-		for user in users:
+		for user in databaseStatus[1]:
 			(username, tag) = str(user).split('#')[0:2]
 			database.addToUserCollection(username, tag, str(user.joined_at))
 	return response
