@@ -120,6 +120,12 @@ def command_listusers(args):
 		response = "This command is disabled by configuration!"
 	return response
 
+def command_cleardatabase():
+	users = database.findAllUsers()
+	for user in users:
+		database.deleteFromUsers(user["username"], user["tag"])
+	return "Database cleared!"
+
 
 def handle_commands(message):
 	messageParts = message.content.split(" ")
@@ -142,6 +148,10 @@ def handle_commands(message):
 
 	if(command == "!listusers"):
 		response = command_listusers(args)
+		return response
+
+	if(command == "!cleardatabase"):
+		response = command_cleardatabase()
 		return response
 
 	return "No commands matching " + command
