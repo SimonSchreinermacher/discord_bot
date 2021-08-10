@@ -64,10 +64,10 @@ def command_init():
 	if(configStatus[0] == 1):
 		response = "This bot is already initialized and ready to use"
 	elif(configStatus[0] == 0):
-		response = "This bot is already initialized, but there values missing for the following entries:\n"
+		response = "This bot is already initialized, but some entries are missing. These will be automatically created with their default value:\n"
 		for key in configStatus[1]:
-			response = response + key + "\n"
-		response = response + "It is strongly recommended to use !restoredefault for all missing entries to make sure, the bot works as intended"
+			response = response + command_restoredefault([key])
+		#response = response + "It is strongly recommended to use !restoredefault for all missing entries to make sure, the bot works as intended"
 	else:
 		#Create config.json
 		config.initConfig()
@@ -87,7 +87,7 @@ def command_restoredefault(args):
 			configEntry = args[0]
 			defaultValue = defaultData[configEntry]
 			config.changeConfigEntry(configEntry, defaultValue)
-			response = "Config entry " + configEntry + " changed to its default value " + str(defaultValue)
+			response = "Config entry " + configEntry + " changed to its default value " + str(defaultValue)+ "\n"
 			return response
 		except:
 			response = configEntry + " is not a valid config entry!"
