@@ -121,10 +121,13 @@ def command_listusers(args):
 	return response
 
 def command_cleardatabase():
-	users = database.findAllUsers()
-	for user in users:
-		database.deleteFromUsers(user["username"], user["tag"])
-	return "Database cleared!"
+	if(config.getFromConfig("enable_command_cleardatabase") == True):
+		users = database.findAllUsers()
+		for user in users:
+			database.deleteFromUsers(user["username"], user["tag"])
+		return "Database cleared!"
+	else:
+		return "This command is disabled by configuration!"
 
 
 def handle_commands(message):

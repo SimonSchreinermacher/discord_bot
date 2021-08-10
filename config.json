@@ -1,5 +1,6 @@
 {
     "bot_channel": "bot-commands",
     "enable_command_stats": true,
-    "enable_command_listusers": true
+    "enable_command_listusers": true,
+    "enable_command_cleardatabase": true
 }
