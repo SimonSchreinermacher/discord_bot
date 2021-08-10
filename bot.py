@@ -69,8 +69,15 @@ def command_init():
 			response = response + key + "\n"
 		response = response + "It is strongly recommended to use !restoredefault for all missing entries to make sure, the bot works as intended"
 	else:
+		#Create config.json
 		config.initConfig()
 		response = "Created config file with default configuration settings"
+
+		#Fill user database with all users currently on this server
+		users = getAllUsers()
+		for user in users:
+			(username, tag) = str(user).split('#')[0:2]
+			database.addToUserCollection(username, tag, str(user.joined_at))
 	return response
 
 def command_restoredefault(args):
@@ -163,6 +170,7 @@ def handle_commands(message):
 async def on_message(message):
 	if message.author == bot.user:
 		return
+	print(database.findAllUsers())
 	#If message is sent to the bot-commands channel, the bot interprets it as a command, else as a normal message
 	if(str(message.channel) == config.getFromConfig("bot_channel") or message.content.split(" ")[0] == "!init"):
 		response = handle_commands(message)

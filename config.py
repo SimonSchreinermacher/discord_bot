@@ -7,7 +7,8 @@ def defaultConfig():
     data = {
         "bot_channel" : "bot-commands",
         "enable_command_stats" : True,
-        "enable_command_listusers": True
+        "enable_command_listusers": True,
+        "enable_command_cleardatabase": True
     }
     return data
 
