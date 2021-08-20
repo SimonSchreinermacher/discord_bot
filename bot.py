@@ -163,9 +163,9 @@ async def on_message(message):
 		return
 
 	#If message is sent to the bot-commands channel, the bot interprets it as a command and ignores it, else as a normal message
-	await bot.process_commands(message)
 	if(config.isValidConfig()[0] == 1):
 		if(str(message.channel) == config.getFromConfig("bot_channel")):
+			await bot.process_commands(message)
 			return
 		(author,tag) = str(message.author).split("#")[0:2]
 		
