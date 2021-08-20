@@ -2,12 +2,13 @@ import discord
 import database
 import config
 from discord.utils import get
+from discord.ext import commands
 import fileinput
 from dotenv import load_dotenv
 import os
 
 intents = discord.Intents.all()
-bot = discord.Client(intents = intents)
+bot = commands.Bot(command_prefix='!', description='description', intents = intents)
 
 def getServer():
 	server_id = os.getenv("ID")
@@ -17,12 +18,24 @@ def getAllUsers():
 	server = getServer()
 	return server.members
 
-def command_stats(author, tag, args, message):
+def restore_entry(configEntry):
+	defaultData = config.defaultConfig()
+	try:
+		defaultValue = defaultData[configEntry]
+		config.changeConfigEntry(configEntry, defaultValue)
+		response = "Config entry " + configEntry + " changed to its default value " + str(defaultValue)+ "\n"
+	except:
+		response = configEntry + " is not a valid config entry!"
+	return response
+
+@bot.command()
+async def stats(ctx, *args):
 	response = ""
 
 	if(config.getFromConfig("enable_command_stats") == True):
 		#Own Stats
 		if(len(args) == 0):
+			(author, tag) = str(ctx.author).split("#")[0:2]
 			results = database.findByUsername(author, tag)
 			if(len(results) == 0):
 				response = "User" + author + "has not sent any messages on this server"
@@ -56,9 +69,10 @@ def command_stats(author, tag, args, message):
 			response = "Too many arguments given, use !stats for own stats or !stats <username> for another users stats"
 	else:
 		response = "This command is disabled by configuration!"
-	return response
+	await ctx.send(response)
 
-def command_init(): #intializes config file and database if necessary
+@bot.command()
+async def init(ctx): #intializes config file and database if necessary
 	response = ""
 
 	#CONFIG
@@ -69,7 +83,7 @@ def command_init(): #intializes config file and database if necessary
 	elif(configStatus[0] == 0):
 		response += "The config is already initialized, but some entries are missing. These will be automatically created with their default value:\n"
 		for key in configStatus[1]:
-			response = response + command_restoredefault([key]) + "\n"
+			response = response + restore_entry(key) + "\n"
 		#response = response + "It is strongly recommended to use !restoredefault for all missing entries to make sure, the bot works as intended"
 	else:
 		#Create config.json
@@ -88,25 +102,19 @@ def command_init(): #intializes config file and database if necessary
 		for user in databaseStatus[1]:
 			(username, tag) = str(user).split('#')[0:2]
 			database.addToUserCollection(username, tag, str(user.joined_at))
-	return response
+	await ctx.send(response)
 
-def command_restoredefault(args):
+@bot.command()
+async def restoredefault(ctx, *args):
+	response = ""
 	if(len(args) == 1):
-		defaultData = config.defaultConfig()
-		try:
-			configEntry = args[0]
-			defaultValue = defaultData[configEntry]
-			config.changeConfigEntry(configEntry, defaultValue)
-			response = "Config entry " + configEntry + " changed to its default value " + str(defaultValue)+ "\n"
-			return response
-		except:
-			response = configEntry + " is not a valid config entry!"
-			return response
+		response = restore_entry(args[0])
 	else:
 		response = "Usage: !restoredefault <ConfigEntry>"
-		return response
+	await ctx.send(response)
 
-def command_listusers(args):
+@bot.command()
+async def listusers(ctx, *args):
 	users = getAllUsers()
 	response = ""
 
@@ -135,62 +143,30 @@ def command_listusers(args):
 						response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
 	else:
 		response = "This command is disabled by configuration!"
-	return response
+	await ctx.send(response)
 
-def command_cleardatabase():
+@bot.command()
+async def cleardatabase(ctx):
 	if(config.getFromConfig("enable_command_cleardatabase") == True):
 		users = database.findAllUsers()
 		for user in users:
 			database.deleteFromUsers(user["username"], user["tag"])
-		return "Database cleared!"
+		response = "Database cleared!"
 	else:
-		return "This command is disabled by configuration!"
+		response = "This command is disabled by configuration!"
+	await ctx.send(response)
 
-
-def handle_commands(message):
-	messageParts = message.content.split(" ")
-	command = messageParts[0]
-	args = messageParts[1:]
-	response = ""
-	(author,tag) = str(message.author).split("#")[0:2]
-
-	if(command == "!init"):
-		response = command_init()
-		return response
-
-	if(command == "!restoredefault"):
-		response = command_restoredefault(args)
-		return response
-
-	if(command == "!stats"):
-		response = command_stats(author, tag, args, message)
-		return response
-
-	if(command == "!listusers"):
-		response = command_listusers(args)
-		return response
-
-	if(command == "!cleardatabase"):
-		response = command_cleardatabase()
-		return response
-
-	return "No commands matching " + command
 		
 @bot.event
 async def on_message(message):
 	if message.author == bot.user:
 		return
-	if message.content.split(" ")[0] == "!init":
-		response = command_init()
-		await message.channel.send(response)
-		return
-	#If message is sent to the bot-commands channel, the bot interprets it as a command, else as a normal message
+
+	#If message is sent to the bot-commands channel, the bot interprets it as a command and ignores it, else as a normal message
+	await bot.process_commands(message)
 	if(config.isValidConfig()[0] == 1):
 		if(str(message.channel) == config.getFromConfig("bot_channel")):
-			response = handle_commands(message)
-			await message.channel.send(response)
 			return
-
 		(author,tag) = str(message.author).split("#")[0:2]
 		
 		#If the message was sent to a channel that is not responsible for handling commands, increment message count of user
