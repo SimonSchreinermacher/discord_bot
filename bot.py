@@ -162,8 +162,8 @@ async def on_message(message):
 	if message.author == bot.user:
 		return
 
-	#If message is sent to the bot-commands channel, the bot interprets it as a command and ignores it, else as a normal message
 	if(config.isValidConfig()[0] == 1):
+		#If message is sent to the bot-commands channel, the bot interprets it as a command and ignores it, else as a normal message
 		if(str(message.channel) == config.getFromConfig("bot_channel")):
 			await bot.process_commands(message)
 			return
@@ -175,6 +175,12 @@ async def on_message(message):
 			database.addToUserCollection(author, tag, message.author.joined_at)
 		
 		database.incrementMessageCount(author, tag)
+		return
+
+	if(message.content == "!init"):
+		await init(message.channel)
+		return
+
 
 load_dotenv()
 token = os.getenv("TOKEN")
