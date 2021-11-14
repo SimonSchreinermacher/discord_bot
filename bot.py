@@ -22,19 +22,19 @@ class Bot(commands.Bot):
 		if message.author == bot.user:
 			return
 
-		if(config.isValidConfig()[0] == 1):
+		if(config.is_valid_config()[0] == 1):
 			#If message is sent to the bot-commands channel, the bot interprets it as a command and ignores it, else as a normal message
-			if(str(message.channel) == config.getFromConfig("bot_channel")):
+			if(str(message.channel) == config.get_from_config("bot_channel")):
 				await bot.process_commands(message)
 				return
 			(author,tag) = str(message.author).split("#")[0:2]
 			
 			#If the message was sent to a channel that is not responsible for handling commands, increment message count of user
-			results = database.findByUsername(author, tag)
+			results = database.find_by_username(author, tag)
 			if(len(results) == 0):
-				database.addToUserCollection(author, tag, message.author.joined_at)
+				database.add_to_user_collection(author, tag, message.author.joined_at)
 			
-			database.incrementMessageCount(author, tag)
+			database.increment_message_count(author, tag)
 			return
 
 		if(message.content == "!init"):
