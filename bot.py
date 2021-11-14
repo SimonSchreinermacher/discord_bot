@@ -1,5 +1,6 @@
 import discord
 import database
+import commands as cmd
 import config
 from discord.utils import get
 from discord.ext import commands
@@ -8,180 +9,42 @@ from dotenv import load_dotenv
 import os
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='!', description='description', intents = intents)
+#bot = commands.Bot(command_prefix='!', description='description', intents = intents)
 
-def getServer():
-	server_id = os.getenv("ID")
-	return bot.get_guild(int(server_id))
+class Bot(commands.Bot):
+	def __init__(self):
+		super().__init__(command_prefix='!', description='description', intents = discord.Intents.all())
 
-def getAllUsers():
-	server = getServer()
-	return server.members
+			
+	async def on_message(self, message):
+		if message.author == bot.user:
+			return
 
-def restore_entry(configEntry):
-	defaultData = config.defaultConfig()
-	try:
-		defaultValue = defaultData[configEntry]
-		config.changeConfigEntry(configEntry, defaultValue)
-		response = "Config entry " + configEntry + " changed to its default value " + str(defaultValue)+ "\n"
-	except:
-		response = configEntry + " is not a valid config entry!"
-	return response
-
-@bot.command()
-async def stats(ctx, *args):
-	response = ""
-
-	if(config.getFromConfig("enable_command_stats") == True):
-		#Own Stats
-		if(len(args) == 0):
-			(author, tag) = str(ctx.author).split("#")[0:2]
+		if(config.isValidConfig()[0] == 1):
+			#If message is sent to the bot-commands channel, the bot interprets it as a command and ignores it, else as a normal message
+			if(str(message.channel) == config.getFromConfig("bot_channel")):
+				await bot.process_commands(message)
+				return
+			(author,tag) = str(message.author).split("#")[0:2]
+			
+			#If the message was sent to a channel that is not responsible for handling commands, increment message count of user
 			results = database.findByUsername(author, tag)
 			if(len(results) == 0):
-				response = "User" + author + "has not sent any messages on this server"
-			else:
-				playerData = results[0]
-				response = "User "+ author+ " has sent "+ str(playerData["messagesSent"]) + " messages so far."
-
-		#Stats of other member
-		elif(len(args) == 1):
-			splitArgument = str(args[0]).split("#")
-			username = splitArgument[0]
-
-			#If tag is included in request
-			if(len(splitArgument) == 2):
-				tag = splitArgument[1]
-				results = database.findByUsername(username, tag)
-				if(len(results) == 0):
-					response = "No users in database matching full username " + username + "#" + tag
-				else:
-					playerData = results[0]
-					response = "User "+ username+ "#" + tag +  " has sent "+ str(playerData["messagesSent"]) + " messages so far."
-
-			#If tag is not included in request, all members with matching username will be selected
-			else:
-				results = database.findByUsername(username)
-				if(len(results) == 0):
-					response = "No users in database matching username " + username
-				for result in results:
-					response = response + "User " + username + "#" + result["tag"] + " has sent " + str(result["messagesSent"]) + " messages so far\n"
-		else:
-			response = "Too many arguments given, use !stats for own stats or !stats <username> for another users stats"
-	else:
-		response = "This command is disabled by configuration!"
-	await ctx.send(response)
-
-@bot.command()
-async def init(ctx): #intializes config file and database if necessary
-	response = ""
-
-	#CONFIG
-	configStatus = config.isValidConfig() 
-	#status = 1 -> Config is properly set up		status = 0 -> Values are missing		status = -1 -> The file itself is missing
-	if(configStatus[0] == 1):
-		response += "The config is already initialized and ready to use\n"
-	elif(configStatus[0] == 0):
-		response += "The config is already initialized, but some entries are missing. These will be automatically created with their default value:\n"
-		for key in configStatus[1]:
-			response = response + restore_entry(key) + "\n"
-		#response = response + "It is strongly recommended to use !restoredefault for all missing entries to make sure, the bot works as intended"
-	else:
-		#Create config.json
-		config.initConfig()
-		response += "Created config file with default configuration settings\n"
-
-	#DATABASE
-	users = getAllUsers()
-	databaseStatus = database.allUsersPresent(users)
-	#status = 1 -> All users on this server are present in the database 	status = 0 -> Some users are not present in the database
-	if(databaseStatus[0] == 1):
-		response += "The database is already complete and ready to use\n"
-	else:
-		response += str(len(databaseStatus[1])) + " entries are missing in the database and are now added\n"
-		#Fill user database with all users currently on this server
-		for user in databaseStatus[1]:
-			(username, tag) = str(user).split('#')[0:2]
-			database.addToUserCollection(username, tag, str(user.joined_at))
-	await ctx.send(response)
-
-@bot.command()
-async def restoredefault(ctx, *args):
-	response = ""
-	if(len(args) == 1):
-		response = restore_entry(args[0])
-	else:
-		response = "Usage: !restoredefault <ConfigEntry>"
-	await ctx.send(response)
-
-@bot.command()
-async def listusers(ctx, *args):
-	users = getAllUsers()
-	response = ""
-
-	if(config.getFromConfig("enable_command_listusers") == True):
-
-		#Get all users
-		if(len(args) == 0):
-			response = "All users on this server:\n"
-			for user in users:
-				user_roles = ""
-				for role in user.roles:
-					if str(role) != "@everyone":
-						user_roles = user_roles + str(role)
-				response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
-		
-		elif(len(args) == 1):
-			#Get all users that are currently online
-			if(str(args[0]) == "online"):
-				response = "All users currently online:\n"
-				for user in users:
-					if(str(user.status) == "online"):
-						user_roles = ""
-						for role in user.roles:
-							if str(role) != "@everyone":
-								user_roles = user_roles + str(role)
-						response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
-	else:
-		response = "This command is disabled by configuration!"
-	await ctx.send(response)
-
-@bot.command()
-async def cleardatabase(ctx):
-	if(config.getFromConfig("enable_command_cleardatabase") == True):
-		users = database.findAllUsers()
-		for user in users:
-			database.deleteFromUsers(user["username"], user["tag"])
-		response = "Database cleared!"
-	else:
-		response = "This command is disabled by configuration!"
-	await ctx.send(response)
-
-		
-@bot.event
-async def on_message(message):
-	if message.author == bot.user:
-		return
-
-	if(config.isValidConfig()[0] == 1):
-		#If message is sent to the bot-commands channel, the bot interprets it as a command and ignores it, else as a normal message
-		if(str(message.channel) == config.getFromConfig("bot_channel")):
-			await bot.process_commands(message)
+				database.addToUserCollection(author, tag, message.author.joined_at)
+			
+			database.incrementMessageCount(author, tag)
 			return
-		(author,tag) = str(message.author).split("#")[0:2]
-		
-		#If the message was sent to a channel that is not responsible for handling commands, increment message count of user
-		results = database.findByUsername(author, tag)
-		if(len(results) == 0):
-			database.addToUserCollection(author, tag, message.author.joined_at)
-		
-		database.incrementMessageCount(author, tag)
-		return
 
-	if(message.content == "!init"):
-		await init(message.channel)
-		return
+		if(message.content == "!init"):
+			commands = cmd.Commands(bot)
+			await commands.init(commands, message.channel)
+			return
+
 
 
 load_dotenv()
 token = os.getenv("TOKEN")
+bot = Bot()
+
+bot.load_extension("commands")
 bot.run(token)
