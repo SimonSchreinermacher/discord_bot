@@ -1,11 +1,11 @@
 from discord.ext import commands
-import database
-import config
 import os
 
 class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.database = self.bot.database
+        self.config = self.bot.config
         
         
     def get_server(self):
@@ -19,10 +19,10 @@ class Commands(commands.Cog):
     
     
     def restore_entry(self, config_entry):
-        default_data = config.defaultConfig()
+        default_data = self.config.defaultConfig()
         try:
             default_value = default_data[config_entry]
-            config.changeConfigEntry(config_entry, default_value)
+            self.config.changeConfigEntry(config_entry, default_value)
             response = "Config entry " + config_entry + " changed to its default value " + str(default_value) + "\n"
         except:
             response = config_entry + " is not a valid config entry!"
@@ -32,11 +32,11 @@ class Commands(commands.Cog):
     @commands.command()
     async def stats(self, ctx, *args):
         response = ""
-        if(config.getFromConfig("enable_command_stats") == True):
+        if(self.config.getFromConfig("enable_command_stats") == True):
             #Own Stats
             if(len(args) == 0):
                 (author, tag) = str(ctx.author).split("#")[0:2]
-                results = database.findByUsername(author, tag)
+                results = self.database.findByUsername(author, tag)
                 if(len(results) == 0):
                     response = "User " + author + " has not sent any messages on this server"
                 else:
@@ -51,7 +51,7 @@ class Commands(commands.Cog):
                 #If tag is included in request
                 if(len(split_argument) == 2):
                     tag = split_argument[1]
-                    results = database.findByUsername(username, tag)
+                    results = self.database.findByUsername(username, tag)
                     if(len(results) == 0):
                         response = "No users in database matching full username " + username + "#" + tag
                     else:
@@ -60,7 +60,7 @@ class Commands(commands.Cog):
                     
                 #If tag is not included in request, all members with matching usernames will be selected
                 else:
-                    results = database.findByUsername(username)
+                    results = self.database.findByUsername(username)
                     if(len(results) == 0):
                         response = "No users in database matching username " + username
                     for result in results:
@@ -77,7 +77,7 @@ class Commands(commands.Cog):
         response = ""
         
         #CONFIG
-        config_status = config.isValidConfig()
+        config_status = self.config.isValidConfig()
         if(config_status[0] == 1):
             response += "The config is already configured and ready to use\n"
         elif(config_status[0] == 0):
@@ -86,12 +86,12 @@ class Commands(commands.Cog):
                 response = response + self.restore_entry(key) + "\n"
         else:
             #Create config.json
-            config.initConfig()
+            self.config.initConfig()
             response += "Created config file with default configuration settings\n"
             
         #DATABASE
         users = self.get_all_users()
-        database_status = database.allUsersPresent(users)
+        database_status = self.database.allUsersPresent(users)
         #status = 1 -> All users on this server are present in the database 	status = 0 -> Some users are not present in the database
         if(database_status[0] == 1):
             response += "The database is already configured and ready to use\n"
@@ -100,7 +100,7 @@ class Commands(commands.Cog):
             #Fill user database with all users currently on this server
             for user in database_status[1]:
                 (username, tag) = str(user).split('#')[0:2]
-                database.addToUserCollection(username, tag, str(user.joined_at))
+                self.database.addToUserCollection(username, tag, str(user.joined_at))
         await ctx.send(response)
         
         
@@ -118,7 +118,7 @@ class Commands(commands.Cog):
     async def listusers(self, ctx, *args):
         users = self.get_all_users()
         response = ""
-        if config.getFromConfig("enable_command_listusers"):
+        if self.config.getFromConfig("enable_command_listusers"):
             
             #Get all users
             if len(args) == 0:
@@ -147,14 +147,18 @@ class Commands(commands.Cog):
     
     @commands.command()
     async def cleardatabase(self, ctx):
-        if(config.getFromConfig("enable_command_cleardatabase")):
-            users = database.findAllUsers()
+        if(self.config.getFromConfig("enable_command_cleardatabase")):
+            users = self.database.findAllUsers()
             for user in users:
-                database.deleteFromUsers(user["username"], user["tag"])
+                self.database.deleteFromUsers(user["username"], user["tag"])
             response = "Database cleared!"
         else:
             response = "This command is disabled by configuration!"
-        await ctx.send(response)            
+        await ctx.send(response)
+        
+    @commands.command()
+    async def test(self, ctx):
+        print(self.bot.database.findAllUsers())
         
 
 

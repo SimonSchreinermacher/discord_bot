@@ -1,6 +1,6 @@
 import discord
 import database
-import commands as cmd
+import cogs.commands as cmd
 import config
 from discord.utils import get
 from discord.ext import commands
@@ -12,8 +12,10 @@ intents = discord.Intents.all()
 #bot = commands.Bot(command_prefix='!', description='description', intents = intents)
 
 class Bot(commands.Bot):
-	def __init__(self):
+	def __init__(self, database, config):
 		super().__init__(command_prefix='!', description='description', intents = discord.Intents.all())
+		self.database = database
+		self.config = config
 
 			
 	async def on_message(self, message):
@@ -41,10 +43,10 @@ class Bot(commands.Bot):
 			return
 
 
+if __name__ == "__main__":
+	load_dotenv()
+	token = os.getenv("TOKEN")
+	bot = Bot(database, config)
 
-load_dotenv()
-token = os.getenv("TOKEN")
-bot = Bot()
-
-bot.load_extension("commands")
-bot.run(token)
+	bot.load_extension("cogs.commands")
+	bot.run(token)
