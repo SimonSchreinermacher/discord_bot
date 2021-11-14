@@ -119,27 +119,19 @@ class Commands(commands.Cog):
         users = self.get_all_users()
         response = ""
         if self.config.get_from_config("enable_command_listusers"):
-            
-            #Get all users
-            if len(args) == 0:
+            show_online_only = (len(args) == 1 and str(args[0]) == "online")
+                    
+            if(show_online_only):
+                response = "All users currently online:\n"
+            else:
                 response = "All users on this server:\n"
-                for user in users:
+            for user in users:
+                if (str(user.status) == "online" and show_online_only) or not show_online_only:
                     user_roles = ""
                     for role in user.roles:
                         if str(role) != "@everyone":
                             user_roles += str(role)
-                    response += user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
-                    
-            elif(len(args) == 1):
-                if str(args[0]) == "online":
-                    response = "All users currently online:\n"
-                    for user in users:
-                        if str(user.status) == "online":
-                            user_roles = ""
-                            for role in user.roles:
-                                if str(role) != "@everyone":
-                                    user_roles += str(role)
-                            response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
+                    response = response + user.name + ", Roles: " + user_roles + ", joined on: " + str(user.joined_at) + "\n"
         else:
             response = "This command is disabled by configuration!"
         await ctx.send(response)
