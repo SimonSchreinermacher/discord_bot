@@ -148,6 +148,11 @@ class Commands(commands.Cog):
             response = "This command is disabled by configuration!"
         await ctx.send(response)
         
+    @commands.command()
+    async def about(self, ctx):
+        response = self.config.get_from_config("about_message")
+        await ctx.send(response)
+        
 
 
 def setup(bot):

@@ -1,5 +1,6 @@
 {
     "bot_channel": "bot-commands",
+    "about_message": "This is the default message sent when using !about",
     "enable_command_stats": true,
     "enable_command_listusers": true,
     "enable_command_cleardatabase": true

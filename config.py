@@ -6,6 +6,7 @@ def default_config():
     #DO NOT EDIT THIS DICTIONARY WHILE IN PRODUCTION
     data = {
         "bot_channel" : "bot-commands",
+        "about_message" : "This is the default message sent when using !about",
         "enable_command_stats" : True,
         "enable_command_listusers": True,
         "enable_command_cleardatabase": True
